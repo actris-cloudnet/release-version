@@ -1,0 +1,51 @@
+[project]
+name = "release-version"
+version = "0.0.0"
+description = "Yet another tool for bumping version number and updating changelog"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+keywords = ["development"]
+authors = [
+  {name = "Tuomas Siipola", email = "tuomas.siipola@fmi.fi"},
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development",
+]
+dependencies = ["tomli>=2.0.1"]
+
+[project.optional-dependencies]
+dev = ["black", "mypy", "pylint", "types-toml"]
+
+[project.scripts]
+release-version = "release_version:main"
+
+[project.urls]
+"Homepage" = "https://github.com/actris-cloudnet/release-version"
+"Bug Reports" = "https://github.com/actris-cloudnet/release-version/issues"
+"Source" = "https://github.com/actris-cloudnet/release-version/"
+
+[tool.pylint]
+disable = [
+  "missing-class-docstring",
+  "missing-function-docstring",
+  "missing-module-docstring",
+  "too-few-public-methods",
+  "too-many-branches",
+  "unspecified-encoding",
+]
+
+[tool.release-version]
+filename = "pyproject.toml"
+pattern = "version = \"(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)\""
+changelog = "CHANGELOG.md"
+
+[tool.tomlsort]
+trailing_comma_inline_array = true
+sort_inline_arrays = true
