@@ -21,7 +21,7 @@ classifiers = [
 dependencies = ["tomli>=2.0.1"]
 
 [project.optional-dependencies]
-dev = ["black", "mypy", "pylint", "types-toml"]
+dev = ["black", "mypy", "pylint", "pytest", "types-toml"]
 
 [project.scripts]
 release-version = "release_version:main"
