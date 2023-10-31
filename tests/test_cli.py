@@ -3,9 +3,7 @@
 import datetime
 import os
 import subprocess
-from os import PathLike
 from pathlib import Path
-from typing import Mapping
 
 import pytest
 
@@ -28,10 +26,7 @@ def fixture_repo(tmp_path: Path) -> Repo:
     return Repo(local_path)
 
 
-Env = Mapping[str, str | bytes | PathLike[str] | PathLike[bytes]]
-
-
-def _env(replace: Env) -> Env:
+def _env(replace: dict[str, str]) -> dict[str, str]:
     return {**os.environ, **replace}
 
 
@@ -94,7 +89,7 @@ def test_changelog(repo: Repo, tmp_path: Path):
         ["release-version", "patch"],
         input="y\ny\n",
         text=True,
-        env=_env({"EDITOR": editor_path}),
+        env=_env({"EDITOR": str(editor_path)}),
         cwd=repo.path,
     )
     assert stdout.startswith(
@@ -145,7 +140,7 @@ def test_append_changelog(repo: Repo, tmp_path: Path):
         ["release-version", "minor"],
         input="y\ny\n",
         text=True,
-        env=_env({"EDITOR": editor_path}),
+        env=_env({"EDITOR": str(editor_path)}),
         cwd=repo.path,
     )
     assert stdout.startswith(
@@ -211,7 +206,7 @@ def test_changelog_from_commits(repo: Repo, tmp_path: Path):
         ["release-version", "patch"],
         input="y\ny\n",
         text=True,
-        env=_env({"EDITOR": editor_path}),
+        env=_env({"EDITOR": str(editor_path)}),
         cwd=repo.path,
     )
     assert stdout.startswith(
@@ -287,7 +282,7 @@ def test_changelog_precommit(repo: Repo, tmp_path: Path):
         ["release-version", "patch"],
         input="y\ny\n",
         text=True,
-        env=_env({"EDITOR": editor_path}),
+        env=_env({"EDITOR": str(editor_path)}),
         cwd=repo.path,
     )
     assert stdout.startswith(
