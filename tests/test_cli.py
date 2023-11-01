@@ -1,4 +1,4 @@
-# pylint: disable=line-too-long
+# pylint: disable=line-too-long,subprocess-run-check
 
 import datetime
 import os
@@ -241,7 +241,7 @@ def test_changelog_precommit(repo: Repo, tmp_path: Path):
     )
     editor_path.chmod(0o755)
 
-    precommit_path = repo.path / ".git" / "hooks" / "pre-commit"
+    precommit_path = repo.path / ".git/hooks/pre-commit"
     precommit_path.write_text(
         "#!/usr/bin/env python3\n"
         "import re\n"
@@ -324,3 +324,42 @@ def test_in_subdir(repo: Repo):
         "Updating version 0.1.0 -> 0.1.1. Continue? [y/n] Version 0.1.1 released!"
     )
     assert version.read_text() == "0.1.1"
+
+
+def test_precommit_failure(repo: Repo):
+    pyproject = repo.path / "pyproject.toml"
+    pyproject.write_text(
+        "[project]\n"
+        'name = "test"\n'
+        'version = "0.1.0"\n'
+        "\n"
+        "[tool.release-version]\n"
+        'filename = "pyproject.toml"\n'
+        'pattern = "version = \\"(?P<major>\\\\d+)\\\\.(?P<minor>\\\\d+)\\\\.(?P<patch>\\\\d+)\\""\n'
+    )
+    repo.add(pyproject)
+    repo.commit("Add pyproject.toml")
+
+    precommit_path = repo.path / ".git/hooks/pre-commit"
+    precommit_path.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys\n"
+        "print('ERROR FROM PRE-COMMIT HOOK', file=sys.stderr)\n"
+        "sys.exit(1)\n"
+    )
+    precommit_path.chmod(0o755)
+
+    process = subprocess.run(
+        ["release-version", "patch"],
+        input="y\n",
+        text=True,
+        cwd=repo.path,
+        capture_output=True,
+    )
+    assert process.returncode != 0
+    assert process.stdout == "Updating version 0.1.0 -> 0.1.1. Continue? [y/n] "
+    assert (
+        process.stderr
+        == "ERROR: Running pre-commit hook failed:\nERROR FROM PRE-COMMIT HOOK\n"
+    )
+    assert 'version = "0.1.0"' in pyproject.read_text()

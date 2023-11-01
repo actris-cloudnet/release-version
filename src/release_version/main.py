@@ -53,6 +53,24 @@ def update_changelog(
     path.write_text(new_changelog)
 
 
+def precommit(repo: Repo) -> None:
+    try:
+        repo.run_hook("pre-commit")
+    except FileNotFoundError:
+        pass
+    except CalledProcessError as exc:
+        updated_files = repo.changed_files(staged=False)
+        if not updated_files or not updated_files.issubset(
+            repo.changed_files(staged=True)
+        ):
+            repo.restore(".", staged=True, worktree=True)
+            print("ERROR: Running pre-commit hook failed:", file=sys.stderr)
+            print(exc.stdout, end="", file=sys.stderr)
+            sys.exit(1)
+        for file in updated_files:
+            repo.add(file)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Bump version number.")
     parser.add_argument(
@@ -80,34 +98,18 @@ def main() -> None:
     if not confirm(f"Updating version {old_version} -> {new_version}. Continue?"):
         return
 
-    if config.changelog:
-        update_changelog(repo, config.changelog, old_version, new_version)
-        repo.add(config.changelog)
-
     for filename, old_content in zip(config.filenames, contents):
         new_content = write_version(old_content, config.patterns, new_version)
         filename.write_text(new_content)
         repo.add(filename)
+    precommit(repo)
 
-    try:
-        message = f"Release version {new_version}"
-        repo.commit(message)
-    except CalledProcessError:
-        # Try again if pre-commit hook failed and changed files.
-        updated_files = repo.changed_files(staged=False)
-        if not updated_files:
-            print("ERROR: Commit failed and no files were changed!", file=sys.stderr)
-            sys.exit(1)
-        if not updated_files.issubset(repo.changed_files(staged=True)):
-            print(
-                "ERROR: Commit failed and unexpected files were changed!",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-        for file in updated_files:
-            repo.add(file)
-        repo.commit(message)
+    if config.changelog:
+        update_changelog(repo, config.changelog, old_version, new_version)
+        repo.add(config.changelog)
+        precommit(repo)
 
+    repo.commit(f"Release version {new_version}")
     repo.tag(new_version.tag)
     repo.push("origin", default_branch, new_version.tag, atomic=True)
 

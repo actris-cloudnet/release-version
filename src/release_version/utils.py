@@ -6,6 +6,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from subprocess import STDOUT, CalledProcessError
 from tempfile import NamedTemporaryFile
 from typing import NamedTuple, Sequence
 
@@ -111,7 +112,7 @@ class Repo:
     def commits_since(self, obj: str) -> list[str]:
         try:
             self._git(["rev-parse", "--quiet", "--verify", obj])
-        except subprocess.CalledProcessError:
+        except CalledProcessError:
             return []
         return self._git(
             ["log", "--pretty=format:%s", "--reverse", f"{obj}.."]
@@ -134,6 +135,22 @@ class Repo:
         return set(
             (self.path / line).resolve() for line in self._git(args).splitlines()
         )
+
+    def run_hook(self, name: str) -> None:
+        script = self.path / ".git/hooks/" / name
+        subprocess.check_output(script, text=True, stderr=STDOUT, cwd=self.path)
+
+    def restore(
+        self, file: Path | str, staged: bool = False, worktree: bool = False
+    ) -> None:
+        args: list[str | Path] = ["restore"]
+        if staged:
+            args.append("--staged")
+        if worktree:
+            args.append("--worktree")
+        args.append("--")
+        args.append(file)
+        self._git(args)
 
 
 def read_changelog(path: Path) -> tuple[str, str, str]:
