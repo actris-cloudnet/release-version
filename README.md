@@ -1,6 +1,7 @@
-[![Test](https://github.com/actris-cloudnet/release-version/actions/workflows/test.yml/badge.svg)](https://github.com/actris-cloudnet/release-version/actions/workflows/test.yml)
-
 # Release version
+
+[![Test](https://github.com/actris-cloudnet/release-version/actions/workflows/test.yml/badge.svg)](https://github.com/actris-cloudnet/release-version/actions/workflows/test.yml)
+[![PyPI version](https://badge.fury.io/py/release-version.svg)](https://badge.fury.io/py/release-version)
 
 Yet another tool for bumping version number and updating changelog.
 
