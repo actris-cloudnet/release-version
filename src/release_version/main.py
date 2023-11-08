@@ -43,7 +43,7 @@ def update_changelog(
     print(entry)
     print()
     if not confirm("Use this changelog entry?"):
-        return
+        sys.exit(0)
     today = datetime.date.today().isoformat()
     new_changelog = (
         changelog_prefix

@@ -55,6 +55,29 @@ def test_patch(repo: Repo):
     assert 'version = "0.1.1"' in pyproject.read_text()
 
 
+def test_abort(repo: Repo):
+    pyproject = repo.path / "pyproject.toml"
+    pyproject.write_text(
+        "[project]\n"
+        'name = "test"\n'
+        'version = "0.1.0"\n'
+        "\n"
+        "[tool.release-version]\n"
+        'filename = "pyproject.toml"\n'
+        'pattern = "version = \\"(?P<major>\\\\d+)\\\\.(?P<minor>\\\\d+)\\\\.(?P<patch>\\\\d+)\\""\n'
+    )
+    repo.add(pyproject)
+    repo.commit("Add pyproject.toml")
+    stdout = subprocess.check_output(
+        ["release-version", "patch"],
+        input="n\n",
+        text=True,
+        cwd=repo.path,
+    )
+    assert stdout.startswith("Updating version 0.1.0 -> 0.1.1. Continue? [y/n]")
+    assert 'version = "0.1.0"' in pyproject.read_text()
+
+
 def test_changelog(repo: Repo, tmp_path: Path):
     today = datetime.date.today().isoformat()
 
@@ -103,6 +126,54 @@ def test_changelog(repo: Repo, tmp_path: Path):
     )
     assert 'version = "0.1.1"' in pyproject.read_text()
     assert f"## 0.1.1 – {today}\n\n- Initial release!\n" in changelog.read_text()
+
+
+def test_changelog_abort(repo: Repo, tmp_path: Path):
+    scripts_path = tmp_path / "scripts"
+    scripts_path.mkdir()
+    editor_path = scripts_path / "editor.py"
+    editor_path.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        'Path(sys.argv[1]).write_text("- Initial release!")\n'
+    )
+    editor_path.chmod(0o755)
+
+    pyproject = repo.path / "pyproject.toml"
+    pyproject.write_text(
+        "[project]\n"
+        'name = "test"\n'
+        'version = "0.1.0"\n'
+        "\n"
+        "[tool.release-version]\n"
+        'filename = "pyproject.toml"\n'
+        'pattern = "version = \\"(?P<major>\\\\d+)\\\\.(?P<minor>\\\\d+)\\\\.(?P<patch>\\\\d+)\\""\n'
+        'changelog = "CHANGELOG.md"\n'
+    )
+    repo.add(pyproject)
+    repo.commit("Add pyproject.toml")
+
+    changelog = repo.path / "CHANGELOG.md"
+
+    stdout = subprocess.check_output(
+        ["release-version", "patch"],
+        input="y\nn\n",
+        text=True,
+        env=_env({"EDITOR": str(editor_path)}),
+        cwd=repo.path,
+    )
+    assert stdout.startswith(
+        "Updating version 0.1.0 -> 0.1.1. Continue? [y/n] "
+        "Changelog entry for new version:\n"
+        "\n"
+        "- Initial release!\n"
+        "\n"
+        "Use this changelog entry? [y/n] "
+    )
+    # Note: bumping version was not reverted:
+    assert 'version = "0.1.1"' in pyproject.read_text()
+    assert not changelog.exists()
 
 
 def test_append_changelog(repo: Repo, tmp_path: Path):
