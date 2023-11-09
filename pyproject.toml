@@ -23,7 +23,7 @@ classifiers = [
 dependencies = ["tomli>=2.0.1"]
 
 [project.optional-dependencies]
-dev = ["mypy", "pytest", "types-toml"]
+dev = ["mypy", "pre-commit", "pytest", "types-toml"]
 
 [project.scripts]
 release-version = "release_version:main"

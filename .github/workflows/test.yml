@@ -10,6 +10,11 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Configure Git
+        run: |
+          git config --global user.email "matti@example.org"
+          git config --global user.name "Matti Meikäläinen"
+          git config --global init.defaultBranch main
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -18,7 +23,10 @@ jobs:
           cache: "pip"
       - name: Install dependencies
         run: pip install .[dev]
-      - name: Lint with pylint
-        run: pylint src tests
-      - name: Typecheck with mypy
-        run: mypy src tests
+      - name: Run pre-commit checks
+        if: startsWith(matrix.os, 'ubuntu-')
+        run: |
+          pre-commit run --all-files --show-diff-on-failure
+      - name: Run unit tests
+        if: "!startsWith(matrix.os , 'windows-')" # TODO: Skip Windows for now...
+        run: pytest
