@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 def sub_named_groups(
-    pattern: re.Pattern[str], repl: dict[str, str], string: str
+    pattern: "re.Pattern[str]", repl: "dict[str, str]", string: str
 ) -> str:
     def replfun(match: re.Match[str]) -> str:
         output = match.string[match.start(0) : match.start(1)] + values[0]
@@ -59,7 +59,7 @@ class Version(NamedTuple):
         return f"{self.major}.{self.minor}.{self.patch}"
 
 
-def read_version(contents: str, patterns: list[re.Pattern[str]]) -> Version:
+def read_version(contents: str, patterns: "list[re.Pattern[str]]") -> Version:
     comps = {}
     for pattern in patterns:
         if match := re.search(pattern, contents):
@@ -69,7 +69,7 @@ def read_version(contents: str, patterns: list[re.Pattern[str]]) -> Version:
 
 
 def write_version(
-    contents: str, patterns: list[re.Pattern[str]], version: Version
+    contents: str, patterns: "list[re.Pattern[str]]", version: Version
 ) -> str:
     repl = {key: str(value) for key, value in version._asdict().items()}
     for pattern in patterns:
@@ -79,25 +79,25 @@ def write_version(
 
 def confirm(msg: str) -> bool:
     while True:
-        match input(f"{msg} [y/n] ").lower():
-            case "y":
-                return True
-            case "n":
-                return False
+        answer = input(f"{msg} [y/n] ").lower()
+        if answer == "y":
+            return True
+        if answer == "n":
+            return False
         print("ERROR: Please answer either 'y' or 'n'.", file=sys.stderr)
 
 
 class Repo:
-    def __init__(self, path: Path | None = None):
+    def __init__(self, path: "Path | None" = None):
         root = subprocess.check_output(
             ["git", "rev-parse", "--show-toplevel"], text=True, cwd=path
         )
         self.path = Path(root.strip())
 
-    def _git(self, args: Sequence[str | Path]) -> str:
+    def _git(self, args: "Sequence[str | Path]") -> str:
         return subprocess.check_output(["git", *args], text=True, cwd=self.path)
 
-    def add(self, path: str | Path) -> None:
+    def add(self, path: "str | Path") -> None:
         self._git(["add", path])
 
     def commit(self, message: str, allow_empty: bool = False) -> None:
@@ -128,7 +128,7 @@ class Repo:
     def current_branch(self) -> str:
         return self._git(["branch", "--show-current"]).strip()
 
-    def changed_files(self, staged: bool) -> set[Path]:
+    def changed_files(self, staged: bool) -> "set[Path]":
         args = ["diff", "--name-only"]
         if staged:
             args.append("--staged")
@@ -141,9 +141,9 @@ class Repo:
         subprocess.check_output(script, text=True, stderr=STDOUT, cwd=self.path)
 
     def restore(
-        self, file: Path | str, staged: bool = False, worktree: bool = False
+        self, file: "Path | str", staged: bool = False, worktree: bool = False
     ) -> None:
-        args: list[str | Path] = ["restore"]
+        args: "list[str | Path]" = ["restore"]
         if staged:
             args.append("--staged")
         if worktree:
@@ -153,7 +153,7 @@ class Repo:
         self._git(args)
 
 
-def read_changelog(path: Path) -> tuple[str, str, str]:
+def read_changelog(path: Path) -> "tuple[str, str, str]":
     try:
         changelog = path.read_text()
     except FileNotFoundError:

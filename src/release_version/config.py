@@ -5,7 +5,7 @@ import tomli
 
 
 class Config:
-    changelog: Path | None = None
+    changelog: "Path | None" = None
 
     def __init__(self, root: Path) -> None:
         with open("pyproject.toml", "rb") as file:

@@ -26,7 +26,7 @@ def fixture_repo(tmp_path: Path) -> Repo:
     return Repo(local_path)
 
 
-def _env(replace: dict[str, str]) -> dict[str, str]:
+def _env(replace: dict) -> dict:
     return {**os.environ, **replace}
 
 
