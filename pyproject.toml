@@ -1,6 +1,6 @@
 [project]
 name = "release-version"
-version = "0.1.3"
+version = "0.1.4"
 description = "Yet another tool for bumping version number and updating changelog"
 readme = "README.md"
 requires-python = ">=3.8"
