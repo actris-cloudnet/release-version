@@ -10,7 +10,7 @@ Yet another tool for bumping version number and updating changelog.
 Install by running:
 
 ```sh
-pip install git+https://github.com/actris-cloudnet/release-version.git
+pip install release-version
 ```
 
 Add following in `pyproject.toml` file in the root directory of your project:
