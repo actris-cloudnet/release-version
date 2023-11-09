@@ -23,7 +23,7 @@ classifiers = [
 dependencies = ["tomli>=2.0.1"]
 
 [project.optional-dependencies]
-dev = ["black", "mypy", "pylint", "pytest", "types-toml"]
+dev = ["mypy", "pytest", "types-toml"]
 
 [project.scripts]
 release-version = "release_version:main"
@@ -36,20 +36,16 @@ release-version = "release_version:main"
 [tool.mypy]
 python_version = "3.8"
 
-[tool.pylint]
-disable = [
-  "missing-class-docstring",
-  "missing-function-docstring",
-  "missing-module-docstring",
-  "too-few-public-methods",
-  "too-many-branches",
-  "unspecified-encoding",
-]
-
 [tool.release-version]
 filename = "pyproject.toml"
 pattern = "version = \"(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)\""
 changelog = "CHANGELOG.md"
+
+[tool.ruff]
+extend-select = ["I"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"__init__.py" = ["F401"]
 
 [tool.tomlsort]
 trailing_comma_inline_array = true
