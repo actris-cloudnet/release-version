@@ -180,7 +180,7 @@ def open_editor(content: str) -> str:
     with NamedTemporaryFile(suffix=".md", mode="w+", encoding="utf8") as temp:
         temp.write(content)
         temp.flush()
-        subprocess.check_call([EDITOR, temp.name])
+        subprocess.check_call(f"{EDITOR} {temp.name}", shell=True)
         temp.seek(0)
         return temp.read()
 
