@@ -181,8 +181,8 @@ def open_editor(content: str) -> str:
         temp.write(content)
         temp.flush()
         subprocess.check_call(f"{EDITOR} {temp.name}", shell=True)
-        temp.seek(0)
-        return temp.read()
+        with open(temp.name, encoding="utf-8") as temp_f:
+            return temp_f.read()
 
 
 def congrats() -> str:
