@@ -3,7 +3,7 @@ name = "release-version"
 version = "0.1.6"
 description = "Yet another tool for bumping version number and updating changelog"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {file = "LICENSE"}
 keywords = ["development"]
 authors = [
@@ -16,7 +16,8 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: 3.9",
   "Topic :: Software Development",
 ]
@@ -32,9 +33,6 @@ release-version = "release_version:main"
 "Homepage" = "https://github.com/actris-cloudnet/release-version"
 "Bug Reports" = "https://github.com/actris-cloudnet/release-version/issues"
 "Source" = "https://github.com/actris-cloudnet/release-version/"
-
-[tool.mypy]
-python_version = "3.8"
 
 [tool.release-version]
 filename = "pyproject.toml"
