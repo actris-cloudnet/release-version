@@ -128,6 +128,11 @@ class Repo:
     def current_branch(self) -> str:
         return self._git(["branch", "--show-current"]).strip()
 
+    def up_to_date(self, remote: str, branch: str) -> bool:
+        remote_head = self._git(["ls-remote", remote, branch]).split()[0]
+        local_head = self._git(["rev-parse", f"{remote}/{branch}"]).strip()
+        return local_head == remote_head
+
     def changed_files(self, staged: bool) -> "set[Path]":
         args = ["diff", "--name-only"]
         if staged:

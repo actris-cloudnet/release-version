@@ -82,12 +82,23 @@ def main() -> None:
     args = parser.parse_args()
 
     repo = Repo()
+    default_remote = "origin"
     default_branch = "main"
     if repo.current_branch() != default_branch:
         print(f"FATAL: Not in '{default_branch}' branch!", file=sys.stderr)
         sys.exit(1)
     if repo.changed_files(staged=False) or repo.changed_files(staged=True):
         print("FATAL: Uncommitted changes detected!", file=sys.stderr)
+        sys.exit(1)
+    if not repo.up_to_date(default_remote, default_branch):
+        print(
+            f"FATAL: Local '{default_branch}' branch is not up-to-date with remote!",
+            file=sys.stderr,
+        )
+        print(
+            "Please pull the latest changes from remote before releasing.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     config = Config(repo.path)
@@ -111,6 +122,6 @@ def main() -> None:
 
     repo.commit(f"Release version {new_version}")
     repo.tag(new_version.tag)
-    repo.push("origin", default_branch, new_version.tag, atomic=True)
+    repo.push(default_remote, default_branch, new_version.tag, atomic=True)
 
     print(f"Version {new_version} released! {congrats()}")

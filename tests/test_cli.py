@@ -9,19 +9,22 @@ import pytest
 from release_version.utils import Repo
 
 
-@pytest.fixture(name="repo")
-def fixture_repo(tmp_path: Path) -> Repo:
+@pytest.fixture(name="remote_path")
+def fixture_remote_path(tmp_path: Path) -> Path:
     remote_path = tmp_path / "git_remote"
     remote_path.mkdir()
     subprocess.check_call(["git", "init", "--bare"], cwd=remote_path)
+    return remote_path
 
+
+@pytest.fixture(name="repo")
+def fixture_repo(tmp_path: Path, remote_path: Path) -> Repo:
     local_path = tmp_path / "git_local"
-    local_path.mkdir()
-    subprocess.check_call(["git", "init"], cwd=local_path)
+    subprocess.check_call(["git", "clone", remote_path, local_path])
     subprocess.check_call(
-        ["git", "remote", "add", "origin", remote_path], cwd=local_path
+        ["git", "commit", "--allow-empty", "-m", "Initial commit"], cwd=local_path
     )
-
+    subprocess.check_call(["git", "push"], cwd=local_path)
     return Repo(local_path)
 
 
@@ -432,4 +435,37 @@ def test_precommit_failure(repo: Repo):
         process.stderr
         == "ERROR: Running pre-commit hook failed:\nERROR FROM PRE-COMMIT HOOK\n"
     )
+    assert 'version = "0.1.0"' in pyproject.read_text()
+
+
+def test_not_up_to_date_with_remote(repo: Repo, remote_path: Path, tmp_path: Path):
+    ninja_path = tmp_path / "git_ninja"
+    subprocess.check_call(["git", "clone", remote_path, ninja_path])
+    (ninja_path / "ninja.txt").write_text("ninja")
+    subprocess.check_call(["git", "add", "ninja.txt"], cwd=ninja_path)
+    subprocess.check_call(["git", "commit", "-m", "Ninja commit"], cwd=ninja_path)
+    subprocess.check_call(["git", "push"], cwd=ninja_path)
+
+    pyproject = repo.path / "pyproject.toml"
+    pyproject.write_text(
+        "[project]\n"
+        'name = "test"\n'
+        'version = "0.1.0"\n'
+        "\n"
+        "[tool.release-version]\n"
+        'filename = "pyproject.toml"\n'
+        'pattern = "version = \\"(?P<major>\\\\d+)\\\\.(?P<minor>\\\\d+)\\\\.(?P<patch>\\\\d+)\\""\n'
+    )
+    repo.add(pyproject)
+    repo.commit("Add pyproject.toml")
+
+    process = subprocess.run(
+        ["release-version", "patch"],
+        input="y\n",
+        text=True,
+        cwd=repo.path,
+        capture_output=True,
+    )
+    assert process.returncode != 0
+    assert "FATAL: Local 'main' branch is not up-to-date with remote!" in process.stderr
     assert 'version = "0.1.0"' in pyproject.read_text()
