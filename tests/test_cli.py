@@ -1,11 +1,10 @@
-# pylint: disable=line-too-long,subprocess-run-check
-
 import datetime
 import os
 import subprocess
 from pathlib import Path
 
 import pytest
+
 from release_version.utils import Repo
 
 
@@ -428,6 +427,7 @@ def test_precommit_failure(repo: Repo):
         text=True,
         cwd=repo.path,
         capture_output=True,
+        check=False,
     )
     assert process.returncode != 0
     assert process.stdout == "Updating version 0.1.0 -> 0.1.1. Continue? [y/n] "
@@ -465,6 +465,7 @@ def test_not_up_to_date_with_remote(repo: Repo, remote_path: Path, tmp_path: Pat
         text=True,
         cwd=repo.path,
         capture_output=True,
+        check=False,
     )
     assert process.returncode != 0
     assert "FATAL: Local 'main' branch is not up-to-date with remote!" in process.stderr

@@ -39,8 +39,9 @@ filename = "pyproject.toml"
 pattern = "version = \"(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)\""
 changelog = "CHANGELOG.md"
 
-[tool.ruff]
+[tool.ruff.lint]
 extend-select = ["I"]
+ignore = ["DTZ011"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "__init__.py" = ["F401"]

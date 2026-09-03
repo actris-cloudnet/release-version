@@ -5,14 +5,15 @@ import random
 import re
 import subprocess
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 from subprocess import STDOUT, CalledProcessError
 from tempfile import NamedTemporaryFile
-from typing import NamedTuple, Sequence
+from typing import NamedTuple
 
 EDITOR = os.environ.get("EDITOR", "vi")
-CHANGELOG_UNRELEASED = re.compile(r"^## Unreleased$", re.M)
-CHANGELOG_SECTION = re.compile(r"^##[^#]", re.M)
+CHANGELOG_UNRELEASED = re.compile(r"^## Unreleased$", re.MULTILINE)
+CHANGELOG_SECTION = re.compile(r"^##[^#]", re.MULTILINE)
 INITIAL_CHANGELOG = """# Changelog
 
 All notable changes to this project will be documented in this file.
@@ -23,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 def sub_named_groups(
-    pattern: "re.Pattern[str]", repl: "dict[str, str]", string: str
+    pattern: re.Pattern[str], repl: dict[str, str], string: str
 ) -> str:
     def replfun(match: re.Match[str]) -> str:
         output = match.string[match.start(0) : match.start(1)] + values[0]
@@ -59,7 +60,7 @@ class Version(NamedTuple):
         return f"{self.major}.{self.minor}.{self.patch}"
 
 
-def read_version(contents: str, patterns: "list[re.Pattern[str]]") -> Version:
+def read_version(contents: str, patterns: list[re.Pattern[str]]) -> Version:
     comps = {}
     for pattern in patterns:
         if match := re.search(pattern, contents):
@@ -69,7 +70,7 @@ def read_version(contents: str, patterns: "list[re.Pattern[str]]") -> Version:
 
 
 def write_version(
-    contents: str, patterns: "list[re.Pattern[str]]", version: Version
+    contents: str, patterns: list[re.Pattern[str]], version: Version
 ) -> str:
     repl = {key: str(value) for key, value in version._asdict().items()}
     for pattern in patterns:
@@ -88,16 +89,16 @@ def confirm(msg: str) -> bool:
 
 
 class Repo:
-    def __init__(self, path: "Path | None" = None):
+    def __init__(self, path: Path | None = None):
         root = subprocess.check_output(
             ["git", "rev-parse", "--show-toplevel"], text=True, cwd=path
         )
         self.path = Path(root.strip())
 
-    def _git(self, args: "Sequence[str | Path]") -> str:
+    def _git(self, args: Sequence[str | Path]) -> str:
         return subprocess.check_output(["git", *args], text=True, cwd=self.path)
 
-    def add(self, path: "str | Path") -> None:
+    def add(self, path: str | Path) -> None:
         self._git(["add", path])
 
     def commit(self, message: str, allow_empty: bool = False) -> None:
@@ -133,22 +134,20 @@ class Repo:
         local_head = self._git(["rev-parse", f"{remote}/{branch}"]).strip()
         return local_head == remote_head
 
-    def changed_files(self, staged: bool) -> "set[Path]":
+    def changed_files(self, staged: bool) -> set[Path]:
         args = ["diff", "--name-only"]
         if staged:
             args.append("--staged")
-        return set(
-            (self.path / line).resolve() for line in self._git(args).splitlines()
-        )
+        return {(self.path / line).resolve() for line in self._git(args).splitlines()}
 
     def run_hook(self, name: str) -> None:
         script = self.path / ".git/hooks/" / name
         subprocess.check_output(script, text=True, stderr=STDOUT, cwd=self.path)
 
     def restore(
-        self, file: "Path | str", staged: bool = False, worktree: bool = False
+        self, file: Path | str, staged: bool = False, worktree: bool = False
     ) -> None:
-        args: "list[str | Path]" = ["restore"]
+        args: list[str | Path] = ["restore"]
         if staged:
             args.append("--staged")
         if worktree:
@@ -158,7 +157,7 @@ class Repo:
         self._git(args)
 
 
-def read_changelog(path: Path) -> "tuple[str, str, str]":
+def read_changelog(path: Path) -> tuple[str, str, str]:
     try:
         changelog = path.read_text()
     except FileNotFoundError:
